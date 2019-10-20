@@ -1,8 +1,16 @@
 const express = require('express')
 const app = express()
+const morgan = require('morgan')
 const bodyParser = require('body-parser')
 
+morgan.token('response-content', function getResponseContent(req) {
+    if (req.method === 'POST') {
+        return JSON.stringify(req.body)
+    }
+})
+
 app.use(bodyParser.json())
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :response-content'))
 
 let persons = [
     {
@@ -66,11 +74,16 @@ app.post('/api/persons', (request, response) => {
 
     console.log(body)
 
-    if (!body.name || !body.number) {
+    if (!body.name) {
         return response.status(400).json({
-            error: 'content missing'
+            error: 'name missing'
         })
-    } else if (NameAlreadyfound(body.name)) {
+    } if (!body.number) {
+        return response.status(400).json({
+            error: 'number missing'
+        })
+    }
+    else if (NameAlreadyfound(body.name)) {
         return response.status(400).json({
             error: 'name must be unique'
         })
